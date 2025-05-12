@@ -31,6 +31,9 @@ class ModuleInstance extends InstanceBase {
 		this.DEVICES_INFO = getSystemDeviceInfo()
 		this.DEVICES = Object.values(this.DEVICES_INFO)
 
+		this.selectedScreens = []
+		this.presetStates = {}
+
 		this.screenSelect = {}
 		this.layerSelect = {}
 		this.presetDefinitionPreset = {}
@@ -141,6 +144,11 @@ class ModuleInstance extends InstanceBase {
 			clearInterval(this.presetBeat)
 			delete this.presetBeat
 		}
+
+		if (this.presetBeat2) {
+			clearInterval(this.presetBeat2)
+			delete this.presetBeat2
+		}
 	}
 
 	/** devices http handle start */
@@ -165,7 +173,7 @@ class ModuleInstance extends InstanceBase {
 				this.config.UCenterFlag = {
 					protocol,
 					ip: '127.0.0.1',
-					port: '8088',
+					port: device.SN.includes('virtual') ? device.protocols[0].port : '8088' //Changed here to work with Simulator via PixelFlow
 				}
 				await this.getDeviceStatusByOpenDetail()
 				this.getGlobalSwitchEffect()
@@ -214,6 +222,7 @@ class ModuleInstance extends InstanceBase {
 			if (HTTP_DEVICES.includes(this.config.modelId)) {
 				this.getAllData()
 				this.presetBeat = setInterval(() => this.getAllData(), 10000) //check every 10s
+				this.presetBeat2 = setInterval(() => this.getRealTimeData(), 200)
 			}
 		} else if (res.code === 8273) {
 			this.log('info', `getDeviceStatusByOpenDetail-Interface exception: ${JSON.stringify(res)}`)
@@ -265,6 +274,7 @@ class ModuleInstance extends InstanceBase {
 			const res = await getDevicePresets(this.config.baseURL, this.config.token, this)
 			if (res.code === 0) {
 				obj = res.data.list
+				this.log('info', `getPresetList:${JSON.stringify(res.data.list)}`)
 			}
 		} catch (e) {}
 		this.log('log', JSON.stringify(obj))
@@ -313,6 +323,29 @@ class ModuleInstance extends InstanceBase {
 			}
 		} catch (e) {}
 		return obj
+	}
+
+	async updateScreens(){
+		const screenList = await this.getScreenList()
+		const screenFilteredList = screenList.filter((item) => item.screenIdObj.type === 2 || item.screenIdObj.type === 4)
+		//this.log('info', JSON.stringify(screenFilteredList))
+
+		this.selectedScreens = screenFilteredList.filter((item) => item.select === 1).map((item) => item.screenId)
+		this.log('debug', 'Selected screens')
+		this.log('debug', JSON.stringify(this.selectedScreens))
+		this.checkFeedbacks('screenSelected')
+	}
+
+	async updatePresetStates() {
+		const presetList = await this.getPresetList()
+		presetList.forEach((item) => {
+			this.presetStates[item.presetId] = item.presetIdObj.playType
+		})
+		this.checkFeedbacks('presetState')
+	}
+
+	async getRealTimeData() {
+		await Promise.all([this.updateScreens(), this.updatePresetStates()])
 	}
 
 	async getAllData() {

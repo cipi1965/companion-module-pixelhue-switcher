@@ -15,8 +15,8 @@ export const getPresetFormatData = (list) => {
 			style: {
 				text: item.general.name,
 				size: 'auto',
-				color: combineRgb(0, 0, 0),
-				bgcolor: combineRgb(0, 255, 0),
+				color: combineRgb(255, 255, 255),
+				bgcolor: combineRgb(0, 0, 0),
 			},
 			steps: [
 				{
@@ -24,6 +24,7 @@ export const getPresetFormatData = (list) => {
 						{
 							actionId: 'preset',
 							options: {
+								loadIn: 4,
 								presetId: item.presetId,
 								sceneType: item.presetIdObj.sceneType,
 								playType: item.presetIdObj.playType,
@@ -33,7 +34,29 @@ export const getPresetFormatData = (list) => {
 					],
 				},
 			],
-			feedbacks: [],
+			feedbacks: [
+				{
+					feedbackId: 'presetState',
+					style: {
+						bgcolor: combineRgb(0, 255, 0),
+						color: combineRgb(0, 0, 0),
+					},
+					options: {
+						state: 'preview',
+						presetId: item.presetId,
+					},
+				},
+				{
+					feedbackId: 'presetState',
+					style: {
+						bgcolor: combineRgb(255, 0, 0),
+					},
+					options: {
+						state: 'program',
+						presetId: item.presetId,
+					},
+				},
+			],
 		}
 		playPresets['preset-play' + item.presetId] = preset
 	}

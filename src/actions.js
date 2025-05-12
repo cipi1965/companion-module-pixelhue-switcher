@@ -108,7 +108,7 @@ export const getActions = (instance) => {
 		options: [
 			{
 				type: 'dropdown',
-				name: 'Preset',
+				label: 'Preset',
 				id: 'presetId',
 				default: 1,
 				choices: Object.values(instance.presetDefinitionPreset).map((item) => ({
@@ -116,6 +116,13 @@ export const getActions = (instance) => {
 					label: item.name,
 				})),
 			},
+			{
+				type: 'dropdown',
+				label: 'Load in',
+				id: 'loadIn',
+				default: 4,
+				choices: [{id: 2, label: 'Program'}, {id: 4, label: 'Preview'}],
+			}
 		],
 		callback: async (event) => {
 			try {
@@ -126,7 +133,7 @@ export const getActions = (instance) => {
 					options: {
 						presetId: obj.presetId,
 						i: obj.i,
-						sceneType: obj.sceneType,
+						sceneType: event.options.loadIn,
 					},
 				}
 				actionsObj['preset'].bind(instance)(data)
@@ -161,6 +168,32 @@ export const getActions = (instance) => {
 			},
 		],
 		callback: async (event) => {
+			try {
+				actionsObj['screen'].bind(instance)(event)
+			} catch (error) {
+				instance.log('error', 'load_preset send error')
+			}
+		},
+	}
+
+	actions['toggleScreen'] = {
+		name: 'Toggle Select a screen',
+		options: [
+			{
+				type: 'dropdown',
+				name: 'Screen',
+				id: 'screenId',
+				default: 1,
+				choices: Object.values(instance.presetDefinitionScreen).map((item) => ({
+					id: item.screenId,
+					label: item.name,
+				})),
+			},
+		],
+		callback: async (event) => {
+			const selected = instance.selectedScreens.includes(event.options.screenId)
+			event.options.select = selected ? '0' : '1'
+			instance.log('info', JSON.stringify(event))
 			try {
 				actionsObj['screen'].bind(instance)(event)
 			} catch (error) {
